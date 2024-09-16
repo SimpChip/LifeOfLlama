@@ -31,7 +31,7 @@ class Sigma(pygame.sprite.Sprite):
             # Add directions to the queue
             self.directions_queue.extend(directions)
             self.update_target_position()
-
+        return True
     def update_target_position(self):
         if self.directions_queue:
             move = self.directions_queue.pop(0)
