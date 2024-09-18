@@ -5,6 +5,9 @@ from sigma import Sigma
 from pytmx.util_pygame import load_pygame
 from sprites import Sprite
 
+import threading
+
+from llm import Llama
 
 import numpy as np
 
@@ -28,7 +31,6 @@ class Game:
         }
 
         
-
         self.set_up_rooms()
 
         
@@ -45,16 +47,20 @@ class Game:
         self.sigma_sprites = pygame.sprite.Group()
 
         
-        self.tile_border_enabled = False
+        self.tile_border_enabled = True
 
         self.players = []
-        
-       
         
         self.draw_room(self.room_maps[self.current_room_index])
 
         self.sigma = Sigma("sigma1.csv", self.all_sprites)
         self.sigma_sprites.add(self.sigma)
+
+
+        self.llm = Llama(self)
+        self.llm.add_sigma(self.sigma)
+
+        self.cumulative_time = 0
 
         self.world_surface = pygame.Surface((TILE_SIZE * 16 ,  TILE_SIZE * 16))
 
@@ -115,11 +121,19 @@ class Game:
             self.zoom_level = max(self.min_zoom_level, self.zoom_level - self.zoom_increment)
 
 
+    def describe_room(self):
+        description = ""
+
+        description += f"You are inside a room with 16x16 tiles, that means there are 16 x-tiles and 16 y-tiles, in total there are {len(self.room_maps)} rooms."
+        description += f"\nYou are currently standing on the tile {self.sigma.sigma_pos} in {self.sigma.current_room}."
+
+        return description
+
 
     def run(self):
         while self.running:
             
-            #dt
+            #dt (in seconds)
             dt = self.clock.tick() / 1000
 
             #event
@@ -154,6 +168,22 @@ class Game:
                         self.switch_room("next")
                     elif event.key == pygame.K_p:  # Press 'P' to go to the previous room
                         self.switch_room("previous")
+                    elif event.key == pygame.K_l: # Press 'L' to move with LLaMa
+                        x = threading.Thread(target=self.llm.step, daemon = True, args=[self.describe_room()])
+                        x.start()
+                        #self.llm.step(self.describe_room())
+
+            
+            
+            self.cumulative_time += dt
+            # Check if 10 seconds have passed since the last print
+            if self.cumulative_time > 15 and not self.sigma.is_moving:
+                # Update the last print time
+                #print(f"{'-'*15}CUMTIME OVER 15{'-'*15}")
+                self.cumulative_time = 0
+                x = threading.Thread(target=self.llm.step, daemon = True, args=[self.describe_room()])
+                x.start()
+
             self.handle_zoom()
 
             #updatet

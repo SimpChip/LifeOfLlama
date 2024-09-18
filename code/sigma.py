@@ -37,7 +37,6 @@ class Sigma(pygame.sprite.Sprite):
         
         self.directions_queue = []  # Queue to handle multiple movements
 
-
         # Initialize last print time
         self.last_print_time = time.time()
     def load_images(self):
@@ -153,8 +152,6 @@ class Sigma(pygame.sprite.Sprite):
                     directions.extend(room_directions)
                     directions.append(f"E{c_room},{c_pos[0]},{c_pos[1]}")
                 
-           
-            
 
             gridForPath = Grid(matrix=rooms[c_room])
             start = gridForPath.node(c_pos[0] , c_pos[1] )
